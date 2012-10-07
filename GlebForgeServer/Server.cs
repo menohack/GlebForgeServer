@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using System;
 using System.Net.Sockets;
+using System.IO;
 
 namespace GlebForgeServer
 {
@@ -54,7 +55,7 @@ namespace GlebForgeServer
 				Array.Reverse(buffer);
 			 */
 
-			Console.WriteLine("Player authenticated with {0}", value);
+			Console.WriteLine("Player authenticated with {0}", BitConverter.ToString(buffer));
 			if (value != AUTHENTICATION_CLIENT_VALUE)
 			{
 				Console.WriteLine("Disconnecting...");
@@ -72,7 +73,16 @@ namespace GlebForgeServer
 			{
 				//Read player position
 				//translateMessage();
-				result = stream.Read(buffer, 0, 8);
+				try
+				{
+					result = stream.Read(buffer, 0, 8);
+				}
+				catch (IOException e)
+				{
+					Console.WriteLine("Client closed the connection!");
+					client.Close();
+					return;
+				}
 				Position newPos;
 				newPos.x = BitConverter.ToSingle(buffer, 0);
 				newPos.y = BitConverter.ToSingle(buffer, 4);
@@ -82,17 +92,26 @@ namespace GlebForgeServer
 				uint otherID = 0;
 				if (playerID == 0)
 					otherID = 1;
+				float first, second;
 				if (players[otherID] != null)
 				{
-					Buffer.BlockCopy(BitConverter.GetBytes(players[otherID].Position.x), 0, buffer, 0, 4);
-					Buffer.BlockCopy(BitConverter.GetBytes(players[otherID].Position.y), 0, buffer, 4, 4);
-					stream.Write(buffer, 0, 8);
+					first = players[otherID].Position.x;
+					second = players[otherID].Position.y;
 				}
 				else 
+					first = second = 0.0f;
+
+				Buffer.BlockCopy(BitConverter.GetBytes(first), 0, buffer, 0, 4);
+				Buffer.BlockCopy(BitConverter.GetBytes(second), 0, buffer, 4, 4);
+				try
 				{
-					Buffer.BlockCopy(BitConverter.GetBytes(0.0f), 0, buffer, 0, 4);
-					Buffer.BlockCopy(BitConverter.GetBytes(0.0f), 0, buffer, 4, 4);
 					stream.Write(buffer, 0, 8);
+				}
+				catch (IOException e)
+				{
+					Console.WriteLine("Client closed the connection!");
+					client.Close();
+					return;
 				}
 			}
 		}
