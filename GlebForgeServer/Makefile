@@ -5,3 +5,6 @@ all:
 
 run:
 	mono GlebForgeServer.exe
+
+clean:
+	rm -rf GlebForgeServer.exe

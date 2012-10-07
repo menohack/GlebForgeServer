@@ -87,7 +87,6 @@ namespace GlebForgeServer
 				newPos.x = BitConverter.ToSingle(buffer, 0);
 				newPos.y = BitConverter.ToSingle(buffer, 4);
 				players[playerID].Position = newPos;
-				Console.WriteLine("New position of player {0}: ({1}, {2})", playerID, players[playerID].Position.x, players[playerID].Position.y);
 
 				uint otherID = 0;
 				if (playerID == 0)
