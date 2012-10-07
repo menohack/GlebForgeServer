@@ -21,8 +21,8 @@ namespace GlebForgeServer
 
 		public void run()
 		{
-			String ip = "127.0.0.1";
-			//String ip = "128.220.251.35";
+			//String ip = "127.0.0.1";
+			String ip = "128.220.251.35";
 			IPAddress ipAddress = IPAddress.Parse(ip);
 			IPEndPoint ipLocalEndPoint = new IPEndPoint(ipAddress, 11000);
 			try
