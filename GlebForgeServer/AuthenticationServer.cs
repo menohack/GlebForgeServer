@@ -1,44 +1,47 @@
 ﻿using System;
 using System.Net.Sockets;
 using System.Net;
-using System.Threading;
+using System.Collections.Generic;
 
 namespace GlebForgeServer
 {
 	class AuthenticationServer
 	{
-		private Server[] servers;
+		private IList<Server> servers;
 
-		public PlayerData[] players;
+		private List<Player> players;
 
 		public const int MAX_PLAYERS = 8;
 
 		public AuthenticationServer()
 		{
-			servers = new Server[8];
-			players = new PlayerData[2];
+			servers = new List<Server>();
+			players = new List<Player>();
 		}
 
 		public void run()
 		{
-			//String ip = "127.0.0.1";
-			String ip = "128.220.251.35";
+			String ip = "127.0.0.1";
+			//String ip = "128.220.251.35";
 			IPAddress ipAddress = IPAddress.Parse(ip);
 			IPEndPoint ipLocalEndPoint = new IPEndPoint(ipAddress, 11000);
 			try
 			{
-				TcpListener server = new TcpListener(ipLocalEndPoint);
-				server.Start();
-				int numPlayers = 0;
-				while (numPlayers < MAX_PLAYERS)
+				TcpListener listener = new TcpListener(ipLocalEndPoint);
+				listener.Start();
+
+				while (servers.Count < MAX_PLAYERS)
 				{
 					Console.WriteLine("Waiting for connections...");
-					TcpClient client = server.AcceptTcpClient();
-					Console.WriteLine("Player {0} Connected!", numPlayers);
+					TcpClient client = listener.AcceptTcpClient();
+					
 
-					servers[numPlayers] = new Server(client, players, numPlayers);
-					servers[numPlayers].start();
-					numPlayers++;
+					Server server = new Server(client, players);
+					servers.Add(server);
+					//int playerID = servers.IndexOf(server);
+					//server.playerID = playerID;
+					Console.WriteLine("Player Connected!");
+					server.start();
 				}
 
 			}

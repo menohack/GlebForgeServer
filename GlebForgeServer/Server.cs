@@ -2,6 +2,7 @@
 using System;
 using System.Net.Sockets;
 using System.IO;
+using System.Collections.Generic;
 
 namespace GlebForgeServer
 {
@@ -13,11 +14,9 @@ namespace GlebForgeServer
 
 		private NetworkStream stream;
 
-		private PlayerData[] players;
+		private List<Player> players;
 
-		private uint numPlayers;
-
-		private int playerID;
+		private Player player;
 
 		private const int AUTHENTICATION_CLIENT_VALUE = 390458;
 		private const int AUTHENTICATION_SERVER_VALUE = -283947;
@@ -25,11 +24,10 @@ namespace GlebForgeServer
 
 		private enum MESSAGE { ORIENTATION } 
 
-		public Server(TcpClient client, PlayerData[] players, int playerID)
+		public Server(TcpClient client, List<Player> players)
 		{
 			this.client = client;
 			this.players = players;
-			this.playerID = playerID;
 			thread = new Thread(new ThreadStart(connection));
 		}
 
@@ -40,6 +38,21 @@ namespace GlebForgeServer
 		}
 
 		public void connection()
+		{
+			try 
+			{ 
+				derp();
+			}
+			catch (IOException e)
+			{ 
+				Console.WriteLine(e.Message);
+				client.Close();
+				players.Remove(player);
+				return;
+			}
+		}
+
+		public void derp()
 		{
 			Console.WriteLine("Thread started!");
 			stream = client.GetStream();
@@ -66,52 +79,38 @@ namespace GlebForgeServer
 			stream.Write(BitConverter.GetBytes(AUTHENTICATION_SERVER_VALUE), 0, 4);
 			Console.WriteLine("Authentication successful!");
 
-			players[playerID] = new PlayerData();
-
+			player = new Player();
+			players.Add(player);
 
 			while (true)
 			{
 				//Read player position
 				//translateMessage();
-				try
-				{
-					result = stream.Read(buffer, 0, 8);
-				}
-				catch (IOException e)
-				{
-					Console.WriteLine("Client closed the connection!");
-					client.Close();
-					return;
-				}
+				result = stream.Read(buffer, 0, 8);
+
 				Position newPos;
 				newPos.x = BitConverter.ToSingle(buffer, 0);
 				newPos.y = BitConverter.ToSingle(buffer, 4);
-				players[playerID].Position = newPos;
+				player.Position = newPos;
 
-				uint otherID = 0;
-				if (playerID == 0)
-					otherID = 1;
-				float first, second;
-				if (players[otherID] != null)
+				Player otherPlayer;
+				float first = 0.0f, second = 0.0f;
+				if (players.Count > 1)
 				{
-					first = players[otherID].Position.x;
-					second = players[otherID].Position.y;
+					//Find the first other player.
+					foreach (Player p in players)
+						if (p != player)
+						{
+							otherPlayer = p;
+							first = otherPlayer.Position.x;
+							second = otherPlayer.Position.y;
+						}
 				}
-				else 
-					first = second = 0.0f;
 
 				Buffer.BlockCopy(BitConverter.GetBytes(first), 0, buffer, 0, 4);
 				Buffer.BlockCopy(BitConverter.GetBytes(second), 0, buffer, 4, 4);
-				try
-				{
-					stream.Write(buffer, 0, 8);
-				}
-				catch (IOException e)
-				{
-					Console.WriteLine("Client closed the connection!");
-					client.Close();
-					return;
-				}
+
+				stream.Write(buffer, 0, 8);
 			}
 		}
 

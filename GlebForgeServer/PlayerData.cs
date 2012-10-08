@@ -11,18 +11,28 @@ namespace GlebForgeServer
 		public float y;
 	}
 
-	public class PlayerData
+	public struct Velocity
+	{
+		public float x;
+		public float y;
+	}
+
+	public class Player
 	{
 		public Position Position { get; set; }
 
-		public PlayerData(Position position)
+		public Velocity Velocity { get; set; }
+
+		public Player(Position position, Velocity velocity)
 		{
 			this.Position = position;
+			this.Velocity = velocity;
 		}
 
-		public PlayerData()
+		public Player()
 		{
 			Position = new Position();
+			Velocity = new Velocity();
 		}
 	}
 }
