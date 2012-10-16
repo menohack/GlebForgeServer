@@ -9,20 +9,23 @@ namespace GlebForgeServer
 	{
 		private IList<Server> servers;
 
-		private List<Player> players;
+		//private List<Player> players;
+
+		private static PlayerDatabase players;
 
 		public const int MAX_PLAYERS = 8;
 
 		public AuthenticationServer()
 		{
 			servers = new List<Server>();
-			players = new List<Player>();
+			players = new PlayerDatabase();
 		}
 
 		public void run()
 		{
 			String ip = "127.0.0.1";
 			//String ip = "128.220.251.35";
+			//String ip = "128.220.70.65";
 			IPAddress ipAddress = IPAddress.Parse(ip);
 			IPEndPoint ipLocalEndPoint = new IPEndPoint(ipAddress, 11000);
 			try

@@ -3,6 +3,7 @@ using System;
 using System.Net.Sockets;
 using System.IO;
 using System.Collections.Generic;
+using System.Text;
 
 namespace GlebForgeServer
 {
@@ -14,7 +15,7 @@ namespace GlebForgeServer
 
 		private NetworkStream stream;
 
-		private List<Player> players;
+		private PlayerDatabase players;
 
 		private Player player;
 
@@ -22,9 +23,10 @@ namespace GlebForgeServer
 		private const int AUTHENTICATION_SERVER_VALUE = -283947;
 		private const uint MESSAGE_SIZE = 4;
 
+
 		private enum MESSAGE { ORIENTATION } 
 
-		public Server(TcpClient client, List<Player> players)
+		public Server(TcpClient client, PlayerDatabase players)
 		{
 			this.client = client;
 			this.players = players;
@@ -40,14 +42,14 @@ namespace GlebForgeServer
 		public void connection()
 		{
 			try 
-			{ 
+			{
 				derp();
 			}
 			catch (IOException e)
 			{ 
 				Console.WriteLine(e.Message);
 				client.Close();
-				players.Remove(player);
+				//players.Remove(player);
 				return;
 			}
 		}
@@ -56,7 +58,7 @@ namespace GlebForgeServer
 		{
 			Console.WriteLine("Thread started!");
 			stream = client.GetStream();
-			byte[] buffer = new byte[8];
+			byte[] buffer = new byte[256];
 
 			int result = stream.Read(buffer, 0, 4);
 
@@ -79,8 +81,25 @@ namespace GlebForgeServer
 			stream.Write(BitConverter.GetBytes(AUTHENTICATION_SERVER_VALUE), 0, 4);
 			Console.WriteLine("Authentication successful!");
 
+			//Get the player's credentials (just name for now)	
+			stream.Read(buffer, 0, 4);
+			int length = BitConverter.ToInt32(buffer, 0);
+			if (length > Player.MAX_PLAYER_NAME_LENGTH)
+				throw new Exception("Name too long");
+
+			stream.Read(buffer, 0, length);
+			String name = Encoding.UTF8.GetString(buffer, 0, length);
+			Console.WriteLine("Player attempted to join with name: " + name);
+
 			player = new Player();
-			players.Add(player);
+			player = players.findPlayer(name);
+
+			if (player == null)
+				throw new Exception("Player not found");
+			if (player.loggedIn)
+				throw new Exception("Player " + player.name + " already logged in");
+
+			player.loggedIn = true;
 
 			while (true)
 			{
@@ -92,25 +111,28 @@ namespace GlebForgeServer
 				newPos.x = BitConverter.ToSingle(buffer, 0);
 				newPos.y = BitConverter.ToSingle(buffer, 4);
 				player.Position = newPos;
+				//players.updatePlayer(player);
+				
+				//Find the first other player.
+				List<Player> otherPlayers = players.getNearbyPlayers(player.name);
+				int numNearbyPlayers = otherPlayers.Count;
 
-				Player otherPlayer;
-				float first = 0.0f, second = 0.0f;
-				if (players.Count > 1)
+				//Write the number of players for which we are going to send data
+				stream.Write(BitConverter.GetBytes(numNearbyPlayers), 0, 4);
+
+				int index = 0;
+				//Write the data for each player into a buffer
+				foreach (Player p in otherPlayers)
 				{
-					//Find the first other player.
-					foreach (Player p in players)
-						if (p != player)
-						{
-							otherPlayer = p;
-							first = otherPlayer.Position.x;
-							second = otherPlayer.Position.y;
-						}
+					Buffer.BlockCopy(BitConverter.GetBytes(p.Position.x), 0, buffer, index, 4);
+					Buffer.BlockCopy(BitConverter.GetBytes(p.Position.y), 0, buffer, index + 4, 4);
+
+					index += 8;
+					//Check for buffer full
 				}
 
-				Buffer.BlockCopy(BitConverter.GetBytes(first), 0, buffer, 0, 4);
-				Buffer.BlockCopy(BitConverter.GetBytes(second), 0, buffer, 4, 4);
-
-				stream.Write(buffer, 0, 8);
+				//Write the buffer of player data
+				stream.Write(buffer, 0, index);
 			}
 		}
 

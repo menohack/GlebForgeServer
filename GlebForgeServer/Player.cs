@@ -9,12 +9,24 @@ namespace GlebForgeServer
 	{
 		public float x;
 		public float y;
+
+		public Position(float x, float y)
+		{
+			this.x = x;
+			this.y = y;
+		}
 	}
 
 	public struct Velocity
 	{
 		public float x;
 		public float y;
+
+		public Velocity(float x, float y)
+		{
+			this.x = x;
+			this.y = y;
+		}
 	}
 
 	public class Player
@@ -23,16 +35,24 @@ namespace GlebForgeServer
 
 		public Velocity Velocity { get; set; }
 
-		public Player(Position position, Velocity velocity)
+		public const int MAX_PLAYER_NAME_LENGTH = 6;
+
+		public String name;
+
+		public Boolean loggedIn = false;
+
+		public Player(Position position, Velocity velocity, String name)
 		{
 			this.Position = position;
 			this.Velocity = velocity;
+			this.name = name;
 		}
 
 		public Player()
 		{
 			Position = new Position();
 			Velocity = new Velocity();
+			name = "NoName";
 		}
 	}
 }
