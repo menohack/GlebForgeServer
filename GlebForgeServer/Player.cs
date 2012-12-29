@@ -41,6 +41,7 @@ namespace GlebForgeServer
 
 		public Boolean loggedIn = false;
 
+
 		public Player(Position position, Velocity velocity, String name)
 		{
 			this.Position = position;
