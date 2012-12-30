@@ -19,18 +19,23 @@ namespace GlebForgeServer
 
 		private Player player;
 
-		private const int AUTHENTICATION_CLIENT_VALUE = 390458;
+		public const int AUTHENTICATION_CLIENT_VALUE = 390458;
 		private const int AUTHENTICATION_SERVER_VALUE = -283947;
 		private const uint MESSAGE_SIZE = 4;
+
+		private const int TIMEOUT_TIME = 5000;
 
 
 		private enum MESSAGE { ORIENTATION } 
 
-		public Server(TcpClient client, PlayerDatabase players)
+		GlebForgeServer.CloseServerDelegate closeServer;
+
+		public Server(TcpClient client, PlayerDatabase players, GlebForgeServer.CloseServerDelegate closeServer)
 		{
 			this.client = client;
 			this.players = players;
 			thread = new Thread(new ThreadStart(connection));
+			this.closeServer = closeServer;
 		}
 
 		public void start()
@@ -45,24 +50,92 @@ namespace GlebForgeServer
 			{
 				derp();
 			}
-			catch (IOException e)
+			catch (Exception e)
 			{ 
+				//IOExceptions and TimeoutExceptions have the same behavior
 				Console.WriteLine(e.Message);
 				client.Close();
 				//players.Remove(player);
+				closeServer(this);
 				return;
 			}
+		}
+
+		private int ReadInt()
+		{
+			byte[] buffer = ReadAsync(4);
+
+			return BitConverter.ToInt32(buffer, 0);
+		}
+
+		private byte[] ReadAsync(uint length)
+		{
+			byte[] buffer = new byte[length];
+
+			//This will immediately return if the client closes.
+			IAsyncResult result = stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback((x) => { /*(x.AsyncState as NetworkStream).EndRead(x);*/ }), stream);
+			WaitHandle waitHandle = result.AsyncWaitHandle;
+			bool completed = waitHandle.WaitOne(TIMEOUT_TIME);
+			//int bytesRead = stream.EndRead(result);
+			if (!completed)
+				throw new TimeoutException("Timed out while waiting for authentication value.");
+			Console.WriteLine("Finished async");
+			return buffer;
+		}
+
+		private String ReadString(uint length)
+		{
+			byte[] buffer = ReadAsync(length);
+			return Encoding.UTF8.GetString(buffer, 0, (int)length);
+		}
+
+		private float ReadSingle()
+		{
+			byte[] buffer = ReadAsync(4);
+			return BitConverter.ToSingle(buffer, 0);
+		}
+
+		private void WritePlayerData(IList<Player> otherPlayers)
+		{
+			byte[] buffer = new byte[otherPlayers.Count * 8];
+			int index = 0;
+			//Write the data for each player into a buffer
+			foreach (Player p in otherPlayers)
+			{
+				Buffer.BlockCopy(BitConverter.GetBytes(p.Position.x), 0, buffer, index, 4);
+				Buffer.BlockCopy(BitConverter.GetBytes(p.Position.y), 0, buffer, index + 4, 4);
+
+				index += 8;
+				//Check for buffer full
+			}
+
+			//Write the buffer of player data
+			stream.Write(buffer, 0, index);
 		}
 
 		public void derp()
 		{
 			Console.WriteLine("Thread started!");
 			stream = client.GetStream();
-			byte[] buffer = new byte[256];
 
+			int value = ReadInt();
+			
+
+			/*
+			int slept = 0;
+			while (!stream.DataAvailable)
+			{
+				if (slept >= 5000)
+					throw new TimeoutException("Timed out while waiting for authentication value");
+				Thread.Sleep(1000);
+				slept += 1000;
+			}
+			
 			int result = stream.Read(buffer, 0, 4);
+			*/
+			
 
-			long value = BitConverter.ToInt32(buffer, 0);
+			
 
 			//We may need this later
 			/*
@@ -70,7 +143,7 @@ namespace GlebForgeServer
 				Array.Reverse(buffer);
 			 */
 
-			Console.WriteLine("Player authenticated with {0}", BitConverter.ToString(buffer));
+			Console.WriteLine("Player authenticated with {0}", value);
 			if (value != AUTHENTICATION_CLIENT_VALUE)
 			{
 				Console.WriteLine("Disconnecting...");
@@ -82,13 +155,14 @@ namespace GlebForgeServer
 			Console.WriteLine("Authentication successful!");
 
 			//Get the player's credentials (just name for now)	
-			stream.Read(buffer, 0, 4);
-			int length = BitConverter.ToInt32(buffer, 0);
+			//stream.Read(buffer, 0, 4);
+			//int length = BitConverter.ToInt32(buffer, 0);
+			uint length = (uint)ReadInt();
 			if (length > Player.MAX_PLAYER_NAME_LENGTH)
 				throw new Exception("Name too long");
 
-			stream.Read(buffer, 0, length);
-			String name = Encoding.UTF8.GetString(buffer, 0, length);
+			
+			String name = ReadString(length);
 			Console.WriteLine("Player attempted to join with name: " + name);
 
 			player = new Player();
@@ -105,11 +179,10 @@ namespace GlebForgeServer
 			{
 				//Read player position
 				//translateMessage();
-				result = stream.Read(buffer, 0, 8);
 
 				Position newPos;
-				newPos.x = BitConverter.ToSingle(buffer, 0);
-				newPos.y = BitConverter.ToSingle(buffer, 4);
+				newPos.x = ReadSingle();
+				newPos.y = ReadSingle();
 				player.Position = newPos;
 				//players.updatePlayer(player);
 				
@@ -120,19 +193,7 @@ namespace GlebForgeServer
 				//Write the number of players for which we are going to send data
 				stream.Write(BitConverter.GetBytes(numNearbyPlayers), 0, 4);
 
-				int index = 0;
-				//Write the data for each player into a buffer
-				foreach (Player p in otherPlayers)
-				{
-					Buffer.BlockCopy(BitConverter.GetBytes(p.Position.x), 0, buffer, index, 4);
-					Buffer.BlockCopy(BitConverter.GetBytes(p.Position.y), 0, buffer, index + 4, 4);
-
-					index += 8;
-					//Check for buffer full
-				}
-
-				//Write the buffer of player data
-				stream.Write(buffer, 0, index);
+				WritePlayerData(otherPlayers);
 			}
 		}
 

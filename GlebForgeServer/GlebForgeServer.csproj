@@ -46,7 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AuthenticationServer.cs" />
+    <Compile Include="ListenServer.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="PlayerDatabase.cs" />
     <Compile Include="Program.cs" />

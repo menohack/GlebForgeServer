@@ -13,8 +13,8 @@ namespace GlebForgeServer
             BlackBoxTests.BlackBoxTests test = new BlackBoxTests.BlackBoxTests();
             test.Start();
 
-			AuthenticationServer authServer = new AuthenticationServer();
-			authServer.run();
+			ListenServer listenServer = new ListenServer();
+			listenServer.Run();
 		}
 	}
 }
