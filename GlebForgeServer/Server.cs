@@ -79,7 +79,6 @@ namespace GlebForgeServer
 			//int bytesRead = stream.EndRead(result);
 			if (!completed)
 				throw new TimeoutException("Timed out while waiting for authentication value.");
-			Console.WriteLine("Finished async");
 			return buffer;
 		}
 
@@ -119,24 +118,7 @@ namespace GlebForgeServer
 			stream = client.GetStream();
 
 			int value = ReadInt();
-			
-
-			/*
-			int slept = 0;
-			while (!stream.DataAvailable)
-			{
-				if (slept >= 5000)
-					throw new TimeoutException("Timed out while waiting for authentication value");
-				Thread.Sleep(1000);
-				slept += 1000;
-			}
-			
-			int result = stream.Read(buffer, 0, 4);
-			*/
-			
-
-			
-
+		
 			//We may need this later
 			/*
 			if (!BitConverter.IsLittleEndian)
@@ -145,11 +127,7 @@ namespace GlebForgeServer
 
 			Console.WriteLine("Player authenticated with {0}", value);
 			if (value != AUTHENTICATION_CLIENT_VALUE)
-			{
-				Console.WriteLine("Disconnecting...");
-				client.Close();
-				return;
-			}
+				throw new ApplicationException("Player authenticated with invalid value.");
 
 			stream.Write(BitConverter.GetBytes(AUTHENTICATION_SERVER_VALUE), 0, 4);
 			Console.WriteLine("Authentication successful!");
@@ -159,7 +137,7 @@ namespace GlebForgeServer
 			//int length = BitConverter.ToInt32(buffer, 0);
 			uint length = (uint)ReadInt();
 			if (length > Player.MAX_PLAYER_NAME_LENGTH)
-				throw new Exception("Name too long");
+				throw new ApplicationException("Name too long");
 
 			
 			String name = ReadString(length);
@@ -169,11 +147,13 @@ namespace GlebForgeServer
 			player = players.findPlayer(name);
 
 			if (player == null)
-				throw new Exception("Player not found");
+				throw new ApplicationException("Player not found");
 			if (player.loggedIn)
-				throw new Exception("Player " + player.name + " already logged in");
+				throw new ApplicationException("Player " + player.name + " already logged in");
 
 			player.loggedIn = true;
+
+			Console.WriteLine("{0} logged in successfully!", name);
 
 			while (true)
 			{

@@ -35,7 +35,7 @@ namespace GlebForgeServer
 
 		public Velocity Velocity { get; set; }
 
-		public const int MAX_PLAYER_NAME_LENGTH = 6;
+		public const int MAX_PLAYER_NAME_LENGTH = 10;
 
 		public String name;
 
