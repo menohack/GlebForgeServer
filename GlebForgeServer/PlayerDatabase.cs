@@ -5,6 +5,12 @@ using System.Xml.Linq;
 
 namespace GlebForgeServer
 {
+	/// <summary>
+	/// The PlayerDatabase class contains the in-memory player data as well as the functionality for
+	/// writing the data to an XML file. In the future this will connect to an SQL database rather
+	/// than writing to file. Every thread running in the model communicates with this singleton
+	/// class to keep the player data coordinated.
+	/// </summary>
 	public class PlayerDatabase
 	{
 		/// <summary>
@@ -23,12 +29,40 @@ namespace GlebForgeServer
 		private const String DATABASE_FILE_NAME = "database.xml";
 
 		/// <summary>
+		/// The static instance of the PlayerDatabase.
+		/// </summary>
+		private static PlayerDatabase instance;
+
+		/// <summary>
+		/// Singleton constructor. It initializes the instance on the first get.
+		/// </summary>
+		public static PlayerDatabase Instance
+		{
+			get
+			{
+				if (instance == null)
+					instance = new PlayerDatabase();
+				return instance; 
+			}
+			private set { }
+		}
+
+		/// <summary>
 		/// The default constructor loads the database from a file.
 		/// </summary>
-		public PlayerDatabase()
+		private PlayerDatabase()
 		{
 			//if (System.IO.File.Exists(DATABASE_FILE_NAME))
 			//	LoadDatabase();
+			dict = new ConcurrentDictionary<string, Player>();
+			database = new XElement("Players");
+		}
+
+		/// <summary>
+		/// Reset the database.
+		/// </summary>
+		public void Reset()
+		{
 			dict = new ConcurrentDictionary<string, Player>();
 			database = new XElement("Players");
 		}

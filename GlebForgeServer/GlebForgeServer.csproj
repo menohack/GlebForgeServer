@@ -54,12 +54,6 @@
     <Compile Include="Server.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BlackBoxTests\BlackBoxTests.csproj">
-      <Project>{600d0c13-334b-4a02-ab0c-cfa6809a6ffd}</Project>
-      <Name>BlackBoxTests</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

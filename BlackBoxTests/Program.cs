@@ -1,10 +1,14 @@
-﻿namespace GlebForgeServer
+﻿using GlebForgeServer;
+
+namespace BlackBoxTests
 {
 	class Program
 	{
 		static void Main(string[] args)
 		{
-			//Console.WriteLine("isLittleEndian: {0}", BitConverter.IsLittleEndian);
+            BlackBoxTests test = new BlackBoxTests();
+            test.Start();
+
 			ListenServer listenServer = new ListenServer();
 			listenServer.Run();
 		}

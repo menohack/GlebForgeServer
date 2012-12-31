@@ -39,12 +39,12 @@ namespace BlackBoxTests
         /// </summary>
         private static void RunAllTests()
         {
-			RunAuthenticationTests();
+			RunServerTests();
         }
 
-		private static void RunAuthenticationTests()
+		private static void RunServerTests()
 		{
-			AuthenticationTests.RunTests();
+			ServerTests.RunTests();
 		}
     }
 }

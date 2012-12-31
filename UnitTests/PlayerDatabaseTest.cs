@@ -9,7 +9,7 @@ namespace UnitTests
 	public class PlayerDatabaseTest
 	{
 
-		PlayerDatabase der = new PlayerDatabase();
+		PlayerDatabase der = PlayerDatabase.Instance;
 		Player player1, player2;
 
 		[TestInitialize]
@@ -55,8 +55,8 @@ namespace UnitTests
 			Assert.IsTrue(der.GetNearbyPlayers("Test").Contains(player2));
 			Assert.IsTrue(der.GetNearbyPlayers("tickles").Contains(player1));
 
-			PlayerDatabase ler = new PlayerDatabase();
-			Assert.IsTrue(ler.GetNearbyPlayers("Test").Count == 0);
+			der.Reset();
+			Assert.IsTrue(der.GetNearbyPlayers("Test").Count == 0);
 		}
 
 		[TestMethod]

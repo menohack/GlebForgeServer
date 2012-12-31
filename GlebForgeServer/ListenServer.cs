@@ -9,7 +9,7 @@ namespace GlebForgeServer
 	/// <summary>
 	/// This class accepts connections and spawns AuthenticationServer threads.
 	/// </summary>
-	class ListenServer
+	public class ListenServer
 	{
 		private IList<Server> servers;
 
@@ -17,7 +17,7 @@ namespace GlebForgeServer
 
 		private static PlayerDatabase players;
 
-		
+		private const int LISTEN_LENGTH = 10000;
 
 		public void CloseServer(Server server)
 		{
@@ -30,7 +30,7 @@ namespace GlebForgeServer
 		public ListenServer()
 		{
 			servers = new List<Server>();
-			players = new PlayerDatabase();
+			players = PlayerDatabase.Instance;
 			players.CreateTestDatabase();
 			players.SaveDatabase();
 		}
@@ -55,7 +55,7 @@ namespace GlebForgeServer
 						//TcpClient client = listener.AcceptTcpClient();
 						var task = listener.AcceptTcpClientAsync();
 						
-						if (!task.Wait(20000))
+						if (!task.Wait(LISTEN_LENGTH))
 							continue;
 
 						TcpClient client = task.Result;
@@ -67,7 +67,7 @@ namespace GlebForgeServer
 						Console.WriteLine("{0} players connected", servers.Count);
 						server.start();
 					}
-					System.Threading.Thread.Sleep(1000);
+					//System.Threading.Thread.Sleep(1000);
 				}
 			}
 			catch (SocketException e)
