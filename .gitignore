@@ -3,6 +3,7 @@ bin-debug/
 bin-release/
 obj/
 bin/
+TestResults/
 
 # Project property files
 .actionScriptProperties
