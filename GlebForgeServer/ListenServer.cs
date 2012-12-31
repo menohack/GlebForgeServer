@@ -22,6 +22,7 @@ namespace GlebForgeServer
 		public void CloseServer(Server server)
 		{
 			servers.Remove(server);
+			Console.WriteLine("Removed server. {0} remaining servers.", servers.Count);
 		}
 
 		public const int MAX_PLAYERS = 8;
@@ -30,6 +31,8 @@ namespace GlebForgeServer
 		{
 			servers = new List<Server>();
 			players = new PlayerDatabase();
+			players.CreateTestDatabase();
+			players.SaveDatabase();
 		}
 
 		public void Run()

@@ -33,11 +33,11 @@ namespace GlebForgeServer
 	{
 		public Position Position { get; set; }
 
-		public Velocity Velocity { get; set; }
+		public Velocity Velocity { get; private set; }
 
 		public const int MAX_PLAYER_NAME_LENGTH = 10;
 
-		public String name;
+		public String Name { get; private set; }
 
 		public Boolean loggedIn = false;
 
@@ -46,14 +46,14 @@ namespace GlebForgeServer
 		{
 			this.Position = position;
 			this.Velocity = velocity;
-			this.name = name;
+			this.Name = name;
 		}
 
 		public Player()
 		{
 			Position = new Position();
 			Velocity = new Velocity();
-			name = "NoName";
+			Name = "NoName";
 		}
 	}
 }

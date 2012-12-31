@@ -1,7 +1,6 @@
 ﻿using System.Threading;
 using System;
 using System.Net.Sockets;
-using System.IO;
 using System.Collections.Generic;
 using System.Text;
 
@@ -55,7 +54,8 @@ namespace GlebForgeServer
 				//IOExceptions and TimeoutExceptions have the same behavior
 				Console.WriteLine(e.Message);
 				client.Close();
-				//players.Remove(player);
+				if (player != null)
+					player.loggedIn = false;
 				closeServer(this);
 				return;
 			}
@@ -143,13 +143,13 @@ namespace GlebForgeServer
 			String name = ReadString(length);
 			Console.WriteLine("Player attempted to join with name: " + name);
 
-			player = new Player();
-			player = players.findPlayer(name);
+			//player = new Player();
+			player = players.FindPlayer(name);
 
 			if (player == null)
 				throw new ApplicationException("Player not found");
 			if (player.loggedIn)
-				throw new ApplicationException("Player " + player.name + " already logged in");
+				throw new ApplicationException("Player " + player.Name + " already logged in");
 
 			player.loggedIn = true;
 
@@ -167,7 +167,7 @@ namespace GlebForgeServer
 				//players.updatePlayer(player);
 				
 				//Find the first other player.
-				List<Player> otherPlayers = players.getNearbyPlayers(player.name);
+				List<Player> otherPlayers = players.GetNearbyPlayers(player.Name);
 				int numNearbyPlayers = otherPlayers.Count;
 
 				//Write the number of players for which we are going to send data
