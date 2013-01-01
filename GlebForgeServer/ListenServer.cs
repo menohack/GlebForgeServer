@@ -5,28 +5,46 @@ using System.Collections.Generic;
 
 namespace GlebForgeServer
 {
-	public delegate void CloseServerDelegate(Server server);
 	/// <summary>
 	/// This class accepts connections and spawns AuthenticationServer threads.
 	/// </summary>
 	public class ListenServer
 	{
+		/// <summary>
+		/// The list of server threads. Each thread talks to one player.
+		/// </summary>
 		private IList<Server> servers;
 
-		//private List<Player> players;
+		/// <summary>
+		/// The database of players.
+		/// </summary>
+		private static PlayerDatabase players = PlayerDatabase.Instance;
 
-		private static PlayerDatabase players;
-
+		/// <summary>
+		/// The length of time, in milliseconds, that the ListenServer listens for a connection.
+		/// </summary>
 		private const int LISTEN_LENGTH = 10000;
 
+		/// <summary>
+		/// The maximum number of connected players.
+		/// </summary>
+		public const int MAX_PLAYERS = 8;
+
+		public delegate void CloseServerDelegate(Server server);
+
+		/// <summary>
+		/// Callback function for when a Server thread exits.
+		/// </summary>
+		/// <param name="server">The server that is no longer running.</param>
 		public void CloseServer(Server server)
 		{
 			servers.Remove(server);
 			Console.WriteLine("Removed server. {0} remaining servers.", servers.Count);
 		}
 
-		public const int MAX_PLAYERS = 8;
-
+		/// <summary>
+		/// Constructs the ListenServer.
+		/// </summary>
 		public ListenServer()
 		{
 			servers = new List<Server>();
@@ -35,6 +53,9 @@ namespace GlebForgeServer
 			players.SaveDatabase();
 		}
 
+		/// <summary>
+		/// Runs the ListenServer.
+		/// </summary>
 		public void Run()
 		{
 			String ip = "127.0.0.1";
@@ -60,12 +81,12 @@ namespace GlebForgeServer
 
 						TcpClient client = task.Result;
 
-						Server server = new Server(client, players, new CloseServerDelegate(CloseServer));
+						Server server = new Server(client, new ListenServer.CloseServerDelegate(CloseServer));
 						servers.Add(server);
 						//int playerID = servers.IndexOf(server);
 						//server.playerID = playerID;
 						Console.WriteLine("{0} players connected", servers.Count);
-						server.start();
+						server.Start();
 					}
 					//System.Threading.Thread.Sleep(1000);
 				}

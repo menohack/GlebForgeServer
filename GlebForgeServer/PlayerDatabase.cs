@@ -127,6 +127,18 @@ namespace GlebForgeServer
 		}
 
 		/// <summary>
+		/// Returns a list of all of the players in the database.
+		/// </summary>
+		/// <returns>A list of all the players in the database.</returns>
+		public IList<Player> GetPlayers()
+		{
+			List<Player> list = new List<Player>();
+			foreach (var p in dict)
+				list.Add(p.Value);
+			return list;
+		}
+
+		/// <summary>
 		/// Returns a list of players near the player with name name. Currently this returns all players.
 		/// </summary>
 		/// <param name="name">The name of the player to search nearby.</param>

@@ -3,12 +3,18 @@ using System.IO;
 using System.Net.Sockets;
 using System.Threading;
 
+using GlebForgeServer;
+using System.Collections.Generic;
+using System.Text;
+
 namespace BlackBoxTests
 {
 	class ServerTests
 	{
-		private const uint NUM_CONNECTIONS = 10;
+		private const uint NUM_CONNECTIONS = 1;
 		private const int WAIT_BEFORE_DROP = 5000;
+		private const double FAKE_PLAYER_PROBABILITY = 0.2;
+		private const int MAX_NAME_LENGTH = 20;
 
 		public static void RunTests()
 		{
@@ -26,14 +32,36 @@ namespace BlackBoxTests
 		{
 			Thread[] threads = new Thread[NUM_CONNECTIONS];
 			PlayerThread[] pt = new PlayerThread[NUM_CONNECTIONS];
-			String[] names = { "James", "Gleb", "Anthony" };
+			Random rand = new Random();
+			PlayerDatabase players = PlayerDatabase.Instance;
+			players.CreateTestDatabase();
 			int i = 0;
 			for (; i < NUM_CONNECTIONS; i++)
 			{
-				pt[i] = new PlayerThread(i > 2 ? names[0] : names[i],13,22, i == 0 ? 2 : 0, false);
+				Player player;
+				
+				if (rand.NextDouble() < FAKE_PLAYER_PROBABILITY)
+				{
+					String name;
+					byte[] fakeName = new byte[rand.Next(MAX_NAME_LENGTH)];
+					rand.NextBytes(fakeName);
+					name = fakeName.ToString();
+					player = new Player(new Position((float)(rand.NextDouble() * 800.0), (float)(rand.NextDouble() * 600.0)),
+						new Velocity((float)(rand.NextDouble() * 4.0 - 2.0), (float)(rand.NextDouble() * 4.0 - 2.0)),
+						ASCIIEncoding.ASCII.GetString(fakeName));
+				}
+				else
+				{
+					IList<Player> list = players.GetPlayers();
+					player = list[rand.Next(list.Count)];
+				}
+				
+				pt[i] = new PlayerThread(player, false);
 				threads[i] = new Thread(new ThreadStart(pt[i].SingleConnection));
 				threads[i].Start();
 			}
+
+			//Set a boolean in each thread to true, causing the thread to return
 			Thread.Sleep(WAIT_BEFORE_DROP);
 			foreach (var p in pt)
 				p.done = true;
@@ -42,31 +70,9 @@ namespace BlackBoxTests
 
 	class PlayerThread
 	{
-		private String name;
-
-		private float x;
-		private float X
-		{
-			//The getter randomly moves x in a range of [-2.0,2.0]
-			get
-			{
-				x += (float)(rand.NextDouble() * 4.0 - 2.0);
-
-				if (x > 800.0f)
-					x = 800.0f;
-				else if (x < 0.0f)
-					x = 0.0f;
-				
-				return x;
-			}
-			set { }
-		}
+		private Player player;
 
 		public bool done = false;
-
-		private float delta;
-
-		private float y;
 
 		private static Random rand = new Random();
 
@@ -76,12 +82,9 @@ namespace BlackBoxTests
 
 		private bool networkDebug = true;
 
-		public PlayerThread(String name, float x, float y, float delta, bool networkDebug)
+		public PlayerThread(Player player, bool networkDebug)
 		{
-			this.name = name;
-			this.x = x;
-			this.y = y;
-			this.delta = delta;
+			this.player = player;
 			this.networkDebug = networkDebug;
 		}
 
@@ -94,7 +97,7 @@ namespace BlackBoxTests
 			catch (IOException e)
 			{
 				if (e.InnerException.GetType() == typeof(SocketException))
-					Console.WriteLine("Testing thread {0} threw exception: " + e.Message, name);
+					Console.WriteLine("Testing thread {0} threw exception: " + e.Message, player.Name);
 				else
 					throw e;
 			}
@@ -129,7 +132,7 @@ namespace BlackBoxTests
 
 			MaybeWait();
 
-			buffer = System.Text.Encoding.UTF8.GetBytes(name);
+			buffer = System.Text.Encoding.UTF8.GetBytes(player.Name);
 			stream.Write(BitConverter.GetBytes(buffer.Length), 0, 4);
 			MaybeWait();
 			stream.Write(buffer, 0, buffer.Length);
@@ -138,9 +141,25 @@ namespace BlackBoxTests
 
 			while (!done)
 			{
-				stream.Write(BitConverter.GetBytes(X), 0, 4);
+				float x = player.Position.x + (float)(rand.NextDouble() * 4.0 - 2.0);
+
+				if (x > 800.0f)
+					x = 800.0f;
+				else if (x < 0.0f)
+					x = 0.0f;
+
+				float y = player.Position.y + (float)(rand.NextDouble() * 4.0 - 2.0);
+
+				if (y > 600.0f)
+					y = 600.0f;
+				else if (y < 0.0f)
+					y = 0.0f;
+
+				player.Position = new Position(x, y);
+
+				stream.Write(BitConverter.GetBytes(player.Position.x), 0, 4);
 				MaybeWait();
-				stream.Write(BitConverter.GetBytes(y), 0, 4);
+				stream.Write(BitConverter.GetBytes(player.Position.y), 0, 4);
 				MaybeWait();
 
 				buffer = new byte[4];
@@ -160,6 +179,9 @@ namespace BlackBoxTests
 			}
 		}
 
+		/// <summary>
+		/// Wait for WAIT_MILLIS_LENGTH_MAX with WAIT_PROBABILITY as long as networkDebug is true.
+		/// </summary>
 		private void MaybeWait()
 		{
 			if (rand.NextDouble() > WAIT_PROBABILITY || !networkDebug)
