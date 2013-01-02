@@ -16,8 +16,8 @@ namespace UnitTests
 		public void Initialize()
 		{
 			IDictionary<String, Player> players = new Dictionary<String, Player>();
-			player1 = new Player(new Position(10, 54), new Velocity(0, 33), "Test");
-			player2 = new Player(new Position(-1, 44), new Velocity(-32, 99), "tickles");
+			player1 = new Player(new Position(10, 54), new Velocity(0, 33), "Test", "nutspass");
+			player2 = new Player(new Position(-1, 44), new Velocity(-32, 99), "tickles", "ballspass");
 			players["Test"] = player1;
 			players["tickles"] = player2;
 			der.CreateDatabase(players);

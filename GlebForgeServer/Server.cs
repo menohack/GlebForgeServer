@@ -25,7 +25,7 @@ namespace GlebForgeServer
 		private const int AUTHENTICATION_SERVER_VALUE = -283947;
 		private const uint MESSAGE_SIZE = 4;
 
-		private const int TIMEOUT_TIME = 5000;
+		private const int TIMEOUT_TIME = 15000;
 
 
 		private enum MESSAGE { ORIENTATION }
@@ -36,7 +36,7 @@ namespace GlebForgeServer
 		/// Construct the Server.
 		/// </summary>
 		/// <param name="client">The accepted TcpClient from the ListenServer.</param>
-		/// <param name="closeServer"></param>
+		/// <param name="closeServer">A delegate to the method that should be called once the server closes.</param>
 		public Server(TcpClient client, ListenServer.CloseServerDelegate closeServer)
 		{
 			this.client = client;
@@ -323,6 +323,10 @@ namespace GlebForgeServer
 					throw new ApplicationException("Player not found");
 				if (server.player.loggedIn)
 					throw new ApplicationException("Player " + server.player.Name + " already logged in");
+
+				String password = server.ReadString(128);
+				if (!server.player.Password.Equals(password))
+					throw new ApplicationException(String.Format("Player gave invalid password {0}.", password));
 
 				server.player.loggedIn = true;
 

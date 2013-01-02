@@ -35,18 +35,22 @@ namespace GlebForgeServer
 
 		public Velocity Velocity { get; private set; }
 
-		public const int MAX_PLAYER_NAME_LENGTH = 10;
+		public const int MAX_PLAYER_NAME_LENGTH = 32;
 
 		public String Name { get; private set; }
+
+		public String Password { get; private set; }
 
 		public Boolean loggedIn = false;
 
 
-		public Player(Position position, Velocity velocity, String name)
+		public Player(Position position, Velocity velocity, String name, String password)
 		{
 			this.Position = position;
 			this.Velocity = velocity;
 			this.Name = name;
+			
+			this.Password = password.PadRight(128);
 		}
 
 		public Player()

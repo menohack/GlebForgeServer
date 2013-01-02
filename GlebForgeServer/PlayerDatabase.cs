@@ -67,11 +67,14 @@ namespace GlebForgeServer
 			database = new XElement("Players");
 		}
 
+		/// <summary>
+		/// Create a test database with two players.
+		/// </summary>
 		public void CreateTestDatabase()
 		{
 			IDictionary<String, Player> players = new ConcurrentDictionary<String, Player>();
-			players.Add("James", new Player(new Position(200, 200), new Velocity(0, 0), "James"));
-			players.Add("Gleb", new Player(new Position(400, 300), new Velocity(0, 0), "Gleb"));
+			players.Add("James", new Player(new Position(200, 200), new Velocity(0, 0), "James", "jamespass"));
+			players.Add("Gleb", new Player(new Position(400, 300), new Velocity(0, 0), "Gleb", "glebpass"));
 
 			CreateDatabase(players);
 		}
@@ -88,6 +91,7 @@ namespace GlebForgeServer
 				Player value = player.Value;
 				XElement p = new XElement("Player");
 				p.Add(new XElement("Name", value.Name));
+				p.Add(new XElement("Password", value.Password));
 
 				XElement position = new XElement("Position");
 				position.Add(new XElement("X", value.Position.x));

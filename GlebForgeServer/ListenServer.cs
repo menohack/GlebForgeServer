@@ -23,7 +23,7 @@ namespace GlebForgeServer
 		/// <summary>
 		/// The length of time, in milliseconds, that the ListenServer listens for a connection.
 		/// </summary>
-		private const int LISTEN_LENGTH = 10000;
+		private const int LISTEN_LENGTH = 20000;
 
 		/// <summary>
 		/// The maximum number of connected players.

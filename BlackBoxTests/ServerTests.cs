@@ -11,7 +11,7 @@ namespace BlackBoxTests
 {
 	class ServerTests
 	{
-		private const uint NUM_CONNECTIONS = 1;
+		private const uint NUM_CONNECTIONS = 10;
 		private const int WAIT_BEFORE_DROP = 5000;
 		private const double FAKE_PLAYER_PROBABILITY = 0.2;
 		private const int MAX_NAME_LENGTH = 20;
@@ -42,13 +42,13 @@ namespace BlackBoxTests
 				
 				if (rand.NextDouble() < FAKE_PLAYER_PROBABILITY)
 				{
-					String name;
 					byte[] fakeName = new byte[rand.Next(MAX_NAME_LENGTH)];
+					byte[] fakePassword = new byte[128];
 					rand.NextBytes(fakeName);
-					name = fakeName.ToString();
+					rand.NextBytes(fakePassword);
 					player = new Player(new Position((float)(rand.NextDouble() * 800.0), (float)(rand.NextDouble() * 600.0)),
 						new Velocity((float)(rand.NextDouble() * 4.0 - 2.0), (float)(rand.NextDouble() * 4.0 - 2.0)),
-						ASCIIEncoding.ASCII.GetString(fakeName));
+						ASCIIEncoding.ASCII.GetString(fakeName), ASCIIEncoding.ASCII.GetString(fakePassword));
 				}
 				else
 				{
@@ -138,6 +138,10 @@ namespace BlackBoxTests
 			stream.Write(buffer, 0, buffer.Length);
 
 			MaybeWait();
+
+			buffer = System.Text.Encoding.UTF8.GetBytes(player.Password);
+			//Will always be 128 characters long
+			stream.Write(buffer, 0, buffer.Length);
 
 			while (!done)
 			{
