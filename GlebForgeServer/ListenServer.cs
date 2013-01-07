@@ -39,7 +39,11 @@ namespace GlebForgeServer
 		public void CloseServer(Server server)
 		{
 			servers.Remove(server);
-			Console.WriteLine("Removed server. {0} remaining servers.", servers.Count);
+			uint numPlayersLoggedIn = 0;
+			foreach (var p in players.GetPlayers())
+				if (p.loggedIn)
+					numPlayersLoggedIn++;
+			Console.WriteLine("Removed server. {0} remaining servers, {1} players logged in.", servers.Count, numPlayersLoggedIn);
 		}
 
 		/// <summary>
@@ -73,13 +77,13 @@ namespace GlebForgeServer
 					while (servers.Count < MAX_PLAYERS)
 					{
 						Console.WriteLine("Waiting for connections...");
-						//TcpClient client = listener.AcceptTcpClient();
-						var task = listener.AcceptTcpClientAsync();
+						TcpClient client = listener.AcceptTcpClient();
+						//var task = listener.AcceptTcpClientAsync();
 						
-						if (!task.Wait(LISTEN_LENGTH))
-							continue;
+						//if (!task.Wait(LISTEN_LENGTH))
+						//	continue;
 
-						TcpClient client = task.Result;
+						//TcpClient client = task.Result;
 
 						Server server = new Server(client, new ListenServer.CloseServerDelegate(CloseServer));
 						servers.Add(server);

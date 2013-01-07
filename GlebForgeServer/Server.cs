@@ -23,6 +23,7 @@ namespace GlebForgeServer
 
 		public const int AUTHENTICATION_CLIENT_VALUE = 390458;
 		private const int AUTHENTICATION_SERVER_VALUE = -283947;
+
 		private const uint MESSAGE_SIZE = 4;
 
 		private const int TIMEOUT_TIME = 15000;
@@ -72,13 +73,6 @@ namespace GlebForgeServer
 			}
 		}
 
-		private int ReadInt()
-		{
-			byte[] buffer = ReadAsync(4);
-
-			return BitConverter.ToInt32(buffer, 0);
-		}
-
 		/// <summary>
 		/// Reads length bytes. If the read takes longer than TIMEOUT_TIME it throws an exception.
 		/// </summary>
@@ -96,6 +90,17 @@ namespace GlebForgeServer
 			if (!completed)
 				throw new TimeoutException(String.Format("Timed out while trying to read {0} bytes.", length));
 			return buffer;
+		}
+
+		/// <summary>
+		/// Reads a 32-bit signed integer asynchronously.
+		/// </summary>
+		/// <returns>The integer.</returns>
+		private int ReadInt()
+		{
+			byte[] buffer = ReadAsync(4);
+
+			return BitConverter.ToInt32(buffer, 0);
 		}
 
 		private String ReadString(uint length)
@@ -128,6 +133,7 @@ namespace GlebForgeServer
 			{
 				Buffer.BlockCopy(BitConverter.GetBytes(p.Position.x), 0, buffer, index, 4);
 				Buffer.BlockCopy(BitConverter.GetBytes(p.Position.y), 0, buffer, index + 4, 4);
+				//Console.Write("({0}, {1})",p.Position.x, p.Position.y);
 
 				index += 8;
 				//Check for buffer full
@@ -281,7 +287,7 @@ namespace GlebForgeServer
 			public NetworkState Send(Server server)
 			{
 				server.Write(BitConverter.GetBytes(AUTHENTICATION_SERVER_VALUE), 0, 4);
-				Console.WriteLine("Authentication successful!");
+				//Console.WriteLine("Authentication successful!");
 
 				return new UsernameAndPasswordState();
 			}
@@ -297,9 +303,16 @@ namespace GlebForgeServer
 
 		class UsernameAndPasswordState : NetworkState
 		{
+			private const int LOGIN_SUCCESSFUL_VALUE = 1337;
+			private bool loggedIn = false;
+
 			public NetworkState Send(Server server)
 			{
-				//Password not implemented yet, just move on to next state
+				if (loggedIn)
+				{
+					Console.WriteLine("{0} successfully logged in with {1}", server.player.Name, server.player.Password);
+					server.Write(BitConverter.GetBytes(LOGIN_SUCCESSFUL_VALUE), 0, 4);
+				}
 				return new PositionState();
 			}
 
@@ -308,29 +321,35 @@ namespace GlebForgeServer
 				//Get the player's credentials (just name for now)	
 				//stream.Read(buffer, 0, 4);
 				//int length = BitConverter.ToInt32(buffer, 0);
-				uint length = (uint)server.ReadInt();
-				if (length > Player.MAX_PLAYER_NAME_LENGTH)
-					throw new ApplicationException("Name too long");
+				try
+				{
+					int length = server.ReadInt();
+					if (length > Player.MAX_PLAYER_NAME_LENGTH)
+						throw new ApplicationException(String.Format("Name too long: {0} characters", length));
 
 
-				String name = server.ReadString(length);
-				Console.WriteLine("Player attempted to join with name: " + name);
+					String name = server.ReadString((uint)length);
+					Console.WriteLine("Player attempted to join with name: " + name);
 
-				//player = new Player();
-				server.player = players.FindPlayer(name);
+					//player = new Player();
+					server.player = players.FindPlayer(name);
 
-				if (server.player == null)
-					throw new ApplicationException("Player not found");
-				if (server.player.loggedIn)
-					throw new ApplicationException("Player " + server.player.Name + " already logged in");
+					if (server.player == null)
+						throw new ApplicationException("Player not found");
+					if (server.player.loggedIn)
+						throw new ApplicationException("Player " + server.player.Name + " already logged in");
 
-				String password = server.ReadString(128);
-				if (!server.player.Password.Equals(password))
-					throw new ApplicationException(String.Format("Player gave invalid password {0}.", password));
+					String password = server.ReadString(128);
+					if (!server.player.Password.Equals(password))
+						throw new ApplicationException(String.Format("Player gave invalid password {0}.", password));
 
-				server.player.loggedIn = true;
-
-				Console.WriteLine("{0} logged in successfully!", name);
+					server.player.loggedIn = true;
+					loggedIn = true;
+				}
+				catch (ApplicationException e)
+				{
+					Console.WriteLine(e.Message);
+				}
 			}
 		}
 
@@ -356,6 +375,7 @@ namespace GlebForgeServer
 				newPos.x = server.ReadSingle();
 				newPos.y = server.ReadSingle();
 				server.player.Position = newPos;
+				//Console.WriteLine("Read position ({0},{1})",newPos.x, newPos.y);
 			}
 		}
 	}

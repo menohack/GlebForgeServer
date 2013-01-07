@@ -41,7 +41,7 @@ namespace GlebForgeServer
 
 		public String Password { get; private set; }
 
-		public Boolean loggedIn = false;
+		public bool loggedIn = false;
 
 
 		public Player(Position position, Velocity velocity, String name, String password)

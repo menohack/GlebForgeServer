@@ -23,15 +23,22 @@ namespace BlackBoxTests
             thread.Start();
         }
 
+		private const string FLASH_DEBUGGER_PATH = "E:/Program Files (x86)/FlashDevelop/Tools/flexlibs/runtimes/player/11.3/win/FlashPlayerDebugger.exe";
+		private const string GLEBFORGE_PATH = "E:/Coolege/GlebForge/bin/GlebForge.swf";
+
         /// <summary>
         /// This method launches the game in FlashPlayerDebugger. Note that the file location is machine-dependent.
         /// </summary>
-        private void LaunchGame()
+        private static void LaunchGame(uint numInstances)
         {
-            Process proc = new Process();
-            proc.StartInfo = new ProcessStartInfo("C:/Program Files/FlashDevelop/Tools/flexlibs/runtimes/player/11.5/win/FlashPlayerDebugger.exe", "C:/Users/James/Documents/Projects/GlebForge/bin/GlebForge.swf");
-            proc.StartInfo.UseShellExecute = false;
-            proc.Start();
+			Process[] processes = new Process[numInstances];
+			for (int i = 0; i < numInstances; i++)
+			{
+				processes[i] = new Process();
+				processes[i].StartInfo = new ProcessStartInfo(FLASH_DEBUGGER_PATH, GLEBFORGE_PATH);
+				processes[i].StartInfo.UseShellExecute = false;
+				processes[i].Start();
+			}
         }
 
         /// <summary>
@@ -39,12 +46,17 @@ namespace BlackBoxTests
         /// </summary>
         private static void RunAllTests()
         {
-			RunServerTests();
+			RunFlashTests();
         }
 
-		private static void RunServerTests()
+		private static void RunSimulatedTests()
 		{
 			ServerTests.RunTests();
+		}
+
+		private static void RunFlashTests()
+		{
+			LaunchGame(2);
 		}
     }
 }
