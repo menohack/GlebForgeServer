@@ -180,5 +180,46 @@ namespace GlebForgeServer
 			if (dict.TryGetValue(player.Name, out result))
 				dict.TryUpdate(player.Name, player, result);
 		}
+
+		public bool TryUpdate(string key, Player newValue, Player comparisonValue)
+		{
+			return dict.TryUpdate(key, newValue, comparisonValue);
+		}
+
+		class PlayerDoesNotExistException : ApplicationException
+		{
+		}
+
+		public bool IsLoggedIn(string name)
+		{
+			Player player;
+			if (!dict.TryGetValue(name, out player))
+				throw new PlayerDoesNotExistException();
+
+			return player.LoggedIn;
+		}
+
+		public bool LogIn(string name)
+		{
+			Player player, updatedPlayer;
+			if (!dict.TryGetValue(name, out player))
+				throw new PlayerDoesNotExistException();
+
+			if (player.LoggedIn)
+				return false;
+			else
+			{
+				updatedPlayer = new Player(player);
+				updatedPlayer.LoggedIn = true;
+				//If the update failed then the player has been modified (we are assuming
+				//that LoggedIn was changed to false
+				if (!dict.TryUpdate(name, updatedPlayer, player))
+					return false;
+				else
+					return true;
+
+			}
+		}
+
 	}
 }

@@ -41,7 +41,7 @@ namespace GlebForgeServer
 			servers.Remove(server);
 			uint numPlayersLoggedIn = 0;
 			foreach (var p in players.GetPlayers())
-				if (p.loggedIn)
+				if (p.LoggedIn)
 					numPlayersLoggedIn++;
 			Console.WriteLine("Removed server. {0} remaining servers, {1} players logged in.", servers.Count, numPlayersLoggedIn);
 		}

@@ -41,7 +41,20 @@ namespace GlebForgeServer
 
 		public String Password { get; private set; }
 
-		public bool loggedIn = false;
+		private bool loggedIn = false;
+
+		public bool LoggedIn
+		{
+			get
+			{
+				return loggedIn;
+			}
+			set
+			{
+				Console.WriteLine("{0} set to logged in", Name);
+				loggedIn = value;
+			}
+		}
 
 
 		public Player(Position position, Velocity velocity, String name, String password)
@@ -58,6 +71,19 @@ namespace GlebForgeServer
 			Position = new Position();
 			Velocity = new Velocity();
 			Name = "NoName";
+		}
+
+		/// <summary>
+		/// Copy constructor.
+		/// </summary>
+		/// <param name="copy">The Player object to copy into the new one.</param>
+		public Player(Player copy)
+		{
+			this.Position = copy.Position;
+			this.Velocity = copy.Velocity;
+			this.Name = String.Copy(copy.Name);
+			this.Password = String.Copy(copy.Password);
+			this.loggedIn = copy.loggedIn;
 		}
 	}
 }
